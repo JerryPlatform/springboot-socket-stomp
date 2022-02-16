@@ -88,18 +88,11 @@ public class SocketController {
         List<Room> roomList = roomService.getRoomList();
         List<Map<String, Object>> roomResult = new ArrayList<>();
 
-        Map<String, Object> re = new HashMap<>();
-        Set<SimpSubscription> user = simpUserRegistry.findSubscriptions(subscription -> subscription.equals("/sub/room/list"));
-        for (SimpSubscription subscription : user) {
-            re.put("name", subscription.getSession().getUser().getName());
-        }
-
         for (Room room : roomList) {
             Map<String, Object> result = new HashMap<>();
             result.put("id", room.getId());
             result.put("name", room.getRoomNm());
             result.put("private", room.getPassword() != null ? true : false);
-            result.put("test", re);
             roomResult.add(result);
         }
 
