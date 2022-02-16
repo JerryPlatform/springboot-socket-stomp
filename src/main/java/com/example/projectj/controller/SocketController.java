@@ -40,6 +40,7 @@ public class SocketController {
     @PostMapping("/chat/room/in")
     public void roomIn(@RequestBody SocketVo vo) throws JsonProcessingException {
         Room room = roomService.findRoom(vo.getRoomId());
+        log.info("☆");
         String userName = "[알림]";
         String content = vo.getUserName() + "님이 채팅방에 입장하였습니다.";
         SocketVo result = new SocketVo(userName, content);
