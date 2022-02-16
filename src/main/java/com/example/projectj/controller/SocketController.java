@@ -42,7 +42,7 @@ public class SocketController {
         Room room = roomService.findRoom(vo.getRoomId());
         String userName = "[알림]";
         String content = vo.getUserName() + "님이 채팅방에 입장하였습니다.";
-
+        log.info("★");
         SocketVo result = new SocketVo(userName, content);
 
         String resultValue = objectToJsonString(result);
