@@ -30,14 +30,25 @@ public class SocketController {
 
     private final RoomService roomService;
 
-    @PostMapping("/create/room")
+    @PostMapping("/room")
     public void createRoom(@RequestBody RoomDto dto) {
         roomService.createRoom(dto.getRoomName());
     }
 
-    @DeleteMapping("/remove/{id}/room")
+    @DeleteMapping("/{id}/room")
     public void removeRoom(@PathVariable Long id) {
         roomService.removeRoom(id);
+    }
+
+    @PostMapping("/chat/room/out")
+    public void roomOut(@RequestBody SocketVo vo) throws JsonProcessingException {
+        Room room = roomService.findRoom(vo.getRoomId());
+        String userName = "[알림]";
+        String content = vo.getUserName() + "님이 채팅방에서 퇴장하였습니다.";
+        SocketVo result = new SocketVo(userName, content, "notice");
+        String resultValue = objectToJsonString(result);
+
+        template.convertAndSend("/sub/chat/room/" + room.getId(), resultValue);
     }
 
     @PostMapping("/chat/room/in")
