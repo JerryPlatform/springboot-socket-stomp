@@ -79,10 +79,12 @@ public class SocketController {
 
         String resultValue = objectToJsonString(result);
 
+        log.info("★--------------------------------------");
         Set<SimpSubscription> user = simpUserRegistry.findSubscriptions(subscription -> subscription.equals("/sub/chat/room/1"));
         for (SimpSubscription subscription : user) {
             log.info("☆" + subscription.getSession().getUser().getName());
         }
+        log.info("★--------------------------------------");
 
         template.convertAndSend("/sub/chat/room/" + room.getId(), resultValue);
     }
