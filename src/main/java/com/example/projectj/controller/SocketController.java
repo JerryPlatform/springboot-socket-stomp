@@ -43,7 +43,6 @@ public class SocketController {
         String userName = "[알림]";
         String content = vo.getUserName() + "님이 채팅방에 입장하였습니다.";
         SocketVo result = new SocketVo(userName, content, "notice");
-
         String resultValue = objectToJsonString(result);
 
         template.convertAndSend("/sub/chat/room/" + room.getId(), resultValue);
@@ -54,7 +53,6 @@ public class SocketController {
         Room room = roomService.findRoom(vo.getRoomId());
 	    String userName = vo.getUserName();
         String content = vo.getContent();
-
         SocketVo result = new SocketVo(userName, content, "user");
 
         String resultValue = objectToJsonString(result);
