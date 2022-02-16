@@ -2,6 +2,7 @@ package com.example.projectj.controller;
 
 import com.example.projectj.domain.Room;
 import com.example.projectj.dto.RoomDto;
+import com.example.projectj.dto.VerificationDto;
 import com.example.projectj.service.RoomService;
 import com.example.projectj.vo.SocketVo;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,16 +33,21 @@ public class SocketController {
 
     private final RoomService roomService;
 
-    @PostMapping("/room")
-    public void createRoom(@RequestBody RoomDto dto) {
-        roomService.createRoom(dto.getRoomName());
-    }
-
     void find() {
         Set<SimpSubscription> user = simpUserRegistry.findSubscriptions(subscription -> subscription.equals("/sub/chat/room/1"));
         for (SimpSubscription subscription : user) {
 
         }
+    }
+
+    @PostMapping("/verification/room")
+    public Boolean verificationRoom(@RequestBody VerificationDto dto) {
+        return roomService.verificationRoom(dto);
+    }
+
+    @PostMapping("/room")
+    public void createRoom(@RequestBody RoomDto dto) {
+        roomService.createRoom(dto);
     }
 
     @DeleteMapping("/{id}/room")
@@ -93,6 +99,7 @@ public class SocketController {
             Map<String, Object> result = new HashMap<>();
             result.put("id", room.getId());
             result.put("name", room.getRoomNm());
+            result.put("private", room.getPassword() != null ? true : false);
             roomResult.add(result);
         }
 

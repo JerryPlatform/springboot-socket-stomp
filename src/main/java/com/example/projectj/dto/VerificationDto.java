@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class RoomDto {
-    private String roomName;
+public class VerificationDto {
+    private Long roomId;
     private String password;
 }

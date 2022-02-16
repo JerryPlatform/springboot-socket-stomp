@@ -15,4 +15,7 @@ public class Room {
 
     @Column
     private String roomNm;
+
+    @Column
+    private String password;
 }
