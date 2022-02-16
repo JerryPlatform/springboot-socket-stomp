@@ -8,4 +8,5 @@ public interface RoomService {
     List<Room> getRoomList();
     Room findRoom(Long id);
     void createRoom(String roomName);
+    void removeRoom(Long id);
 }

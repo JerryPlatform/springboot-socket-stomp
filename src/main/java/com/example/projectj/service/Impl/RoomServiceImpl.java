@@ -33,4 +33,10 @@ public class RoomServiceImpl implements RoomService {
         room.setRoomNm(roomName);
         roomRepository.save(room);
     }
+
+    @Transactional
+    @Override
+    public void removeRoom(Long id) {
+        roomRepository.deleteById(id);
+    }
 }

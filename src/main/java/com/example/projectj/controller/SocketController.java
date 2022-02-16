@@ -13,9 +13,7 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,6 +33,11 @@ public class SocketController {
     @PostMapping("/create/room")
     public void createRoom(@RequestBody RoomDto dto) {
         roomService.createRoom(dto.getRoomName());
+    }
+
+    @DeleteMapping("/remove/{id}/room")
+    public void removeRoom(@PathVariable Long id) {
+        roomService.removeRoom(id);
     }
 
     @PostMapping("/chat/room/in")
