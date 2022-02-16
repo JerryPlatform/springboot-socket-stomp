@@ -33,13 +33,6 @@ public class SocketController {
 
     private final RoomService roomService;
 
-    void find() {
-        Set<SimpSubscription> user = simpUserRegistry.findSubscriptions(subscription -> subscription.equals("/sub/chat/room/1"));
-        for (SimpSubscription subscription : user) {
-
-        }
-    }
-
     @PostMapping("/verification/room")
     public Boolean verificationRoom(@RequestBody VerificationDto dto) {
         return roomService.verificationRoom(dto);
@@ -85,6 +78,11 @@ public class SocketController {
         SocketVo result = new SocketVo(userName, content, "user");
 
         String resultValue = objectToJsonString(result);
+
+        Set<SimpSubscription> user = simpUserRegistry.findSubscriptions(subscription -> subscription.equals("/sub/chat/room/1"));
+        for (SimpSubscription subscription : user) {
+            log.info("☆" + subscription.getSession().getUser().getName());
+        }
 
         template.convertAndSend("/sub/chat/room/" + room.getId(), resultValue);
     }
