@@ -19,6 +19,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Log
@@ -53,7 +54,7 @@ public class SocketController {
         Room room = roomService.findRoom(vo.getRoomId());
         String userName = "[알림]";
         String content = vo.getUserName() + "님이 채팅방에서 퇴장하였습니다.";
-        SocketVo result = new SocketVo(userName, content, "notice");
+        SocketVo result = new SocketVo(userName, content, getLocalTime(),"notice");
         String resultValue = objectToJsonString(result);
 
         template.convertAndSend("/sub/chat/room/" + room.getId(), resultValue);
@@ -64,7 +65,7 @@ public class SocketController {
         Room room = roomService.findRoom(vo.getRoomId());
         String userName = "[알림]";
         String content = vo.getUserName() + "님이 채팅방에 입장하였습니다.";
-        SocketVo result = new SocketVo(userName, content, "notice");
+        SocketVo result = new SocketVo(userName, content, getLocalTime(),"notice");
         String resultValue = objectToJsonString(result);
 
         template.convertAndSend("/sub/chat/room/" + room.getId(), resultValue);
@@ -75,7 +76,7 @@ public class SocketController {
         Room room = roomService.findRoom(vo.getRoomId());
 	    String userName = vo.getUserName();
         String content = vo.getContent();
-        SocketVo result = new SocketVo(userName, content, "user");
+        SocketVo result = new SocketVo(userName, content, getLocalTime(),"user");
 
         String resultValue = objectToJsonString(result);
 
@@ -99,6 +100,12 @@ public class SocketController {
         String resultValue = objectToJsonString(roomResult);
 
         template.convertAndSend("/sub/room/list", resultValue);
+    }
+
+    public String getLocalTime() {
+        Date date = new Date();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        return dateFormat.format(date);
     }
 
     public String objectToJsonString(Object o) throws JsonProcessingException {

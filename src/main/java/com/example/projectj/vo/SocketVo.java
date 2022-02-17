@@ -16,11 +16,14 @@ public class SocketVo {
 
     private String content;
 
+    private String date;
+
     private String type;
 
-    public SocketVo(String userName, String content, String type) {
+    public SocketVo(String userName, String content, String date, String type) {
         this.userName = userName;
         this.content = content;
+        this.date = date;
         this.type = type;
     }
 }
