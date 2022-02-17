@@ -65,6 +65,7 @@ public class SocketController {
         creatingSessionInformation(vo);
 
         roomUserSessionSynchronization(vo.getRoomId());
+        roomList();
 
         template.convertAndSend("/sub/chat/room/" + room.getId(), resultValue);
     }
@@ -152,5 +153,4 @@ public class SocketController {
         userInfo.put("userName", vo.getUserName());
         session.add(userInfo);
     }
-
 }
