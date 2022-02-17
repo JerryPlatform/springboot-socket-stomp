@@ -15,6 +15,8 @@ import java.util.Map;
 public class SocketVo {
     private Long roomId;
 
+    private String userId;
+
     private String userName;
 
     private String content;

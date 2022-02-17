@@ -1,34 +1,34 @@
 package com.example.projectj.controller;
 
+import com.example.projectj.CommonUtil;
 import com.example.projectj.domain.Room;
 import com.example.projectj.dto.RoomDto;
 import com.example.projectj.dto.VerificationDto;
 import com.example.projectj.service.RoomService;
 import com.example.projectj.vo.SocketVo;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.messaging.simp.user.SimpSubscription;
-import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.socket.messaging.SessionSubscribeEvent;
+import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Log
 @RestController
 @EnableScheduling
 @RequiredArgsConstructor
 public class SocketController {
-
-    private SimpUserRegistry simpUserRegistry;
 
     private final SimpMessagingTemplate template;
 
@@ -42,76 +42,45 @@ public class SocketController {
     }
 
     @PostMapping("/room")
-    public void createRoom(@RequestBody RoomDto dto) {
+    public void createRoom(@RequestBody RoomDto dto) throws JsonProcessingException {
         roomService.createRoom(dto);
+        roomList();
     }
 
     @DeleteMapping("/{id}/room")
-    public void removeRoom(@PathVariable Long id) {
+    public void removeRoom(@PathVariable Long id) throws JsonProcessingException {
         roomService.removeRoom(id);
-    }
-
-    @PostMapping("/chat/room/out")
-    public void roomOut(@RequestBody SocketVo vo) throws JsonProcessingException {
-        Room room = roomService.findRoom(vo.getRoomId());
-        List<Map<String, Object>> userInfos = new ArrayList<>();
-
-        String userName = "[알림]";
-        String content = vo.getUserName() + "님이 채팅방에서 퇴장하였습니다.";
-        session.stream().filter(map -> map.get("roomId").equals(vo.getRoomId())).forEach(map -> {
-            Map<String, Object> userInfo = new HashMap<>();
-            userInfo.put("userName", map.get("userName"));
-            userInfos.add(userInfo);
-        });
-        SocketVo result = new SocketVo(userName, content, getLocalTime(), userInfos,"notice");
-        removeingSessionInformation(vo);
-
-        String resultValue = objectToJsonString(result);
-
-        template.convertAndSend("/sub/chat/room/" + room.getId(), resultValue);
+        roomList();
     }
 
     @PostMapping("/chat/room/in")
     public void roomIn(@RequestBody SocketVo vo) throws JsonProcessingException {
         Room room = roomService.findRoom(vo.getRoomId());
-        List<Map<String, Object>> userInfos = new ArrayList<>();
 
         String userName = "[알림]";
         String content = vo.getUserName() + "님이 채팅방에 입장하였습니다.";
-        session.stream().filter(map -> map.get("roomId").equals(vo.getRoomId())).forEach(map -> {
-            Map<String, Object> userInfo = new HashMap<>();
-            userInfo.put("userName", map.get("userName"));
-            userInfos.add(userInfo);
-        });
-        SocketVo result = new SocketVo(userName, content, getLocalTime(), userInfos,"notice");
+        SocketVo result = new SocketVo(userName, content, CommonUtil.getLocalTime(),"notice");
+        String resultValue = CommonUtil.objectToJsonString(result);
 
         creatingSessionInformation(vo);
 
-        String resultValue = objectToJsonString(result);
+        roomUserSessionSynchronization(vo.getRoomId());
 
         template.convertAndSend("/sub/chat/room/" + room.getId(), resultValue);
     }
 
     @MessageMapping("/chat/room")
-    public void enter(SocketVo vo) throws JsonProcessingException {
+    public void chatting(SocketVo vo) throws JsonProcessingException {
         Room room = roomService.findRoom(vo.getRoomId());
-        List<Map<String, Object>> userInfos = new ArrayList<>();
 
 	    String userName = vo.getUserName();
         String content = vo.getContent();
-        session.stream().filter(map -> map.get("roomId").equals(vo.getRoomId())).forEach(map -> {
-            Map<String, Object> userInfo = new HashMap<>();
-            userInfo.put("userName", map.get("userName"));
-            userInfos.add(userInfo);
-        });
-        SocketVo result = new SocketVo(userName, content, getLocalTime(), userInfos,"user");
-
-        String resultValue = objectToJsonString(result);
+        SocketVo result = new SocketVo(userName, content, CommonUtil.getLocalTime(),"user");
+        String resultValue = CommonUtil.objectToJsonString(result);
 
         template.convertAndSend("/sub/chat/room/" + room.getId(), resultValue);
     }
 
-    @Scheduled(fixedDelay = 1000)
     @SendTo("/sub/room/list")
     public void roomList() throws JsonProcessingException {
         List<Room> roomList = roomService.getRoomList();
@@ -126,31 +95,62 @@ public class SocketController {
             roomResult.add(result);
         }
 
-        String resultValue = objectToJsonString(roomResult);
+        String resultValue = CommonUtil.objectToJsonString(roomResult);
 
         template.convertAndSend("/sub/room/list", resultValue);
     }
 
-    public String getLocalTime() {
-        Date date = new Date();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        return dateFormat.format(date);
+    @EventListener
+    public void SessionSubscribeEvent(SessionSubscribeEvent event) throws JsonProcessingException {
+        String subscribeInfo = CommonUtil.extractDataFromEventMessages(event, "destination");
+        roomList();
+
+        if (subscribeInfo.contains("/sub/chat/room/")) {
+            roomList();
+        }
+    }
+
+    @EventListener
+    public void SessionUnsubscribeEvent(SessionUnsubscribeEvent event) throws JsonProcessingException {
+        String id = CommonUtil.extractDataFromEventMessages(event, "id");
+        List<Map<String, Object>> userInfos = session.stream().filter(map -> map.get("userId").equals(id)).collect(Collectors.toList());
+        roomList();
+
+        if (userInfos.size() > 0) {
+            session.removeIf(map -> map.get("userId").equals(id));
+            roomOut(userInfos.stream().findFirst().get());
+        }
+    }
+
+    public void roomOut(Map<String, Object> userInfo) throws JsonProcessingException {
+        Room room = roomService.findRoom((Long) userInfo.get("roomId"));
+
+        String userName = "[알림]";
+        String content = userInfo.get("userName") + "님이 채팅방에서 퇴장하였습니다.";
+        SocketVo result = new SocketVo(userName, content, CommonUtil.getLocalTime(),"notice");
+        String resultValue = CommonUtil.objectToJsonString(result);
+
+        roomUserSessionSynchronization(room.getId());
+        template.convertAndSend("/sub/chat/room/" + room.getId(), resultValue);
+    }
+
+    public void roomUserSessionSynchronization(Long roomId) {
+        List<Map<String, Object>> userInfos = new ArrayList<>();
+        session.stream().filter(map -> map.get("roomId").equals(roomId)).forEach(map -> {
+                Map<String, Object> userInfo = new HashMap<>();
+                userInfo.put("userId", map.get("userId"));
+                userInfo.put("userName", map.get("userName"));
+                userInfos.add(userInfo);
+            });
+        template.convertAndSend("/sub/chat/user/room/" + roomId, userInfos);
     }
 
     public void creatingSessionInformation(SocketVo vo) {
         Map<String, Object> userInfo = new HashMap<>();
         userInfo.put("roomId", vo.getRoomId());
+        userInfo.put("userId", vo.getUserId());
         userInfo.put("userName", vo.getUserName());
         session.add(userInfo);
     }
 
-    public void removeingSessionInformation(SocketVo vo) {
-        session.removeIf(map -> map.get("roomId").equals(vo.getRoomId()) && map.get("userName").equals(vo.getUserName()));
-    }
-
-    public String objectToJsonString(Object o) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        String jsonInString = mapper.writeValueAsString(o);
-        return jsonInString;
-    }
 }
