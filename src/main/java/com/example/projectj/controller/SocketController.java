@@ -34,6 +34,8 @@ public class SocketController {
 
     private final RoomService roomService;
 
+    List<Map<String, Object>> session = new ArrayList<>();
+
     @PostMapping("/verification/room")
     public Boolean verificationRoom(@RequestBody VerificationDto dto) {
         return roomService.verificationRoom(dto);
@@ -52,9 +54,18 @@ public class SocketController {
     @PostMapping("/chat/room/out")
     public void roomOut(@RequestBody SocketVo vo) throws JsonProcessingException {
         Room room = roomService.findRoom(vo.getRoomId());
+        List<Map<String, Object>> userInfos = new ArrayList<>();
+
         String userName = "[알림]";
         String content = vo.getUserName() + "님이 채팅방에서 퇴장하였습니다.";
-        SocketVo result = new SocketVo(userName, content, getLocalTime(),"notice");
+        session.stream().filter(map -> map.get("roomId").equals(vo.getRoomId())).forEach(map -> {
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("userName", map.get("userName"));
+            userInfos.add(userInfo);
+        });
+        SocketVo result = new SocketVo(userName, content, getLocalTime(), userInfos,"notice");
+        removeingSessionInformation(vo);
+
         String resultValue = objectToJsonString(result);
 
         template.convertAndSend("/sub/chat/room/" + room.getId(), resultValue);
@@ -63,9 +74,19 @@ public class SocketController {
     @PostMapping("/chat/room/in")
     public void roomIn(@RequestBody SocketVo vo) throws JsonProcessingException {
         Room room = roomService.findRoom(vo.getRoomId());
+        List<Map<String, Object>> userInfos = new ArrayList<>();
+
         String userName = "[알림]";
         String content = vo.getUserName() + "님이 채팅방에 입장하였습니다.";
-        SocketVo result = new SocketVo(userName, content, getLocalTime(),"notice");
+        session.stream().filter(map -> map.get("roomId").equals(vo.getRoomId())).forEach(map -> {
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("userName", map.get("userName"));
+            userInfos.add(userInfo);
+        });
+        SocketVo result = new SocketVo(userName, content, getLocalTime(), userInfos,"notice");
+
+        creatingSessionInformation(vo);
+
         String resultValue = objectToJsonString(result);
 
         template.convertAndSend("/sub/chat/room/" + room.getId(), resultValue);
@@ -74,9 +95,16 @@ public class SocketController {
     @MessageMapping("/chat/room")
     public void enter(SocketVo vo) throws JsonProcessingException {
         Room room = roomService.findRoom(vo.getRoomId());
+        List<Map<String, Object>> userInfos = new ArrayList<>();
+
 	    String userName = vo.getUserName();
         String content = vo.getContent();
-        SocketVo result = new SocketVo(userName, content, getLocalTime(),"user");
+        session.stream().filter(map -> map.get("roomId").equals(vo.getRoomId())).forEach(map -> {
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("userName", map.get("userName"));
+            userInfos.add(userInfo);
+        });
+        SocketVo result = new SocketVo(userName, content, getLocalTime(), userInfos,"user");
 
         String resultValue = objectToJsonString(result);
 
@@ -93,6 +121,7 @@ public class SocketController {
             Map<String, Object> result = new HashMap<>();
             result.put("id", room.getId());
             result.put("name", room.getRoomNm());
+            result.put("userCount", session.stream().filter(map -> map.get("roomId").equals(room.getId())).count());
             result.put("private", room.getPassword() != null ? true : false);
             roomResult.add(result);
         }
@@ -106,6 +135,17 @@ public class SocketController {
         Date date = new Date();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return dateFormat.format(date);
+    }
+
+    public void creatingSessionInformation(SocketVo vo) {
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("roomId", vo.getRoomId());
+        userInfo.put("userName", vo.getUserName());
+        session.add(userInfo);
+    }
+
+    public void removeingSessionInformation(SocketVo vo) {
+        session.removeIf(map -> map.get("roomId").equals(vo.getRoomId()) && map.get("userName").equals(vo.getUserName()));
     }
 
     public String objectToJsonString(Object o) throws JsonProcessingException {
