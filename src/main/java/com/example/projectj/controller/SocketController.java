@@ -9,6 +9,7 @@ import com.example.projectj.vo.SocketVo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -19,10 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Log
@@ -36,6 +34,37 @@ public class SocketController {
     private final RoomService roomService;
 
     List<Map<String, Object>> session = new ArrayList<>();
+
+    @Cacheable(cacheNames = "projectJ", key = "'myKey'")
+    @GetMapping("/test/redis")
+    public String redisTest() throws JsonProcessingException {
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for(int i=1; i < 100; i++) {
+            Map<String, Object> re = new HashMap<>();
+            Random random = new Random();
+            int ra = random.nextInt();
+            re.put("id", i);
+            re.put("random", ra);
+            result.add(re);
+        }
+
+        log.info("★");
+
+        return CommonUtil.objectToJsonString(result);
+    }
+
+    @Cacheable(cacheNames = "redis")
+    @GetMapping("/test/redis1")
+    public List<Map<String, Object>> redisTest1() {
+        return null;
+    }
+
+    @CacheEvict(cacheNames = "redis", allEntries = true)
+    @GetMapping("/test/redis2")
+    public List<Map<String, Object>> redisTest2() {
+        return null;
+    }
 
     @PostMapping("/verification/room")
     public Boolean verificationRoom(@RequestBody VerificationDto dto) {
@@ -83,7 +112,6 @@ public class SocketController {
         template.convertAndSend("/sub/chat/room/" + room.getId(), resultValue);
     }
 
-    @Cacheable(value = "test")
     @SendTo("/sub/room/list")
     public void roomList() throws JsonProcessingException {
         List<Room> roomList = roomService.getRoomList();
