@@ -9,6 +9,7 @@ import com.example.projectj.vo.SocketVo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -82,6 +83,7 @@ public class SocketController {
         template.convertAndSend("/sub/chat/room/" + room.getId(), resultValue);
     }
 
+    @Cacheable(value = "test")
     @SendTo("/sub/room/list")
     public void roomList() throws JsonProcessingException {
         List<Room> roomList = roomService.getRoomList();
