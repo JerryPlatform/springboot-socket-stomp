@@ -35,37 +35,6 @@ public class SocketController {
 
     List<Map<String, Object>> session = new ArrayList<>();
 
-    @Cacheable(cacheNames = "projectJ", key = "'myKey'")
-    @GetMapping("/test/redis")
-    public String redisTest() throws JsonProcessingException {
-        List<Map<String, Object>> result = new ArrayList<>();
-
-        for(int i=1; i < 100; i++) {
-            Map<String, Object> re = new HashMap<>();
-            Random random = new Random();
-            int ra = random.nextInt();
-            re.put("id", i);
-            re.put("random", ra);
-            result.add(re);
-        }
-
-        log.info("★");
-
-        return CommonUtil.objectToJsonString(result);
-    }
-
-    @Cacheable(cacheNames = "redis")
-    @GetMapping("/test/redis1")
-    public List<Map<String, Object>> redisTest1() {
-        return null;
-    }
-
-    @CacheEvict(cacheNames = "redis", allEntries = true)
-    @GetMapping("/test/redis2")
-    public List<Map<String, Object>> redisTest2() {
-        return null;
-    }
-
     @PostMapping("/verification/room")
     public Boolean verificationRoom(@RequestBody VerificationDto dto) {
         return roomService.verificationRoom(dto);
