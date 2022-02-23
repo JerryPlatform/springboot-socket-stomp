@@ -1,0 +1,20 @@
+extend type Query {
+    getRoomList : results
+}
+
+type results {
+    response : result
+    contents : [roomInfo]
+}
+
+type roomInfo {
+    id : Int
+    roomName : String
+}
+
+type result {
+    message : String
+    status : Int
+    errorCode : String
+    token : String
+}

@@ -27,8 +27,6 @@ public class RedisController {
             result.add(re);
         }
 
-        log.info("★");
-
         return CommonUtil.objectToJsonString(result);
     }
 
