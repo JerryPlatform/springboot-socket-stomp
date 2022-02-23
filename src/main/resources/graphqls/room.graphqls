@@ -1,5 +1,11 @@
 extend type Query {
     getRoomList : results
+    getMapData : [test]
+}
+
+type test {
+    id : String
+    value : String
 }
 
 type results {
