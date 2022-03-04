@@ -73,6 +73,8 @@ public class SocketController {
     public void chatting(SocketVo vo) throws JsonProcessingException {
         Room room = roomService.findRoom(vo.getRoomId());
 
+        log.info("★");
+
 	    String userName = vo.getUserName();
         String content = vo.getContent();
         SocketVo result = new SocketVo(userName, content, CommonUtil.getLocalTime(),"user");

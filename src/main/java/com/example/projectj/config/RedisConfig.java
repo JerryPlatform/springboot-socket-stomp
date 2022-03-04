@@ -29,11 +29,8 @@ public class RedisConfig {
         redisTemplate.setConnectionFactory(redisConnectionFactory());
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setValueSerializer(new StringRedisSerializer());
-        // Hash Operation 사용 시
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(new StringRedisSerializer());
-
-        // 혹은 아래 설정으로 모든 Key / Value Serialization을 변경할 수 있음
         redisTemplate.setDefaultSerializer(new StringRedisSerializer());
 
         return redisTemplate;
