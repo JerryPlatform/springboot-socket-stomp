@@ -41,8 +41,6 @@ public class TestController {
     public List<RoomVo> getRoomList1() {
         List<Room> roomList = roomService.getRoomList();
 
-        log.info("★");
-
         List<RoomVo> result = roomList.stream().map(mapRoom).collect(Collectors.toList());
 
         return result;
