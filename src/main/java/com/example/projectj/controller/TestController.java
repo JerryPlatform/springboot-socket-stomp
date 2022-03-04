@@ -32,8 +32,6 @@ public class TestController {
     public ResponseEntity<Response> getRoomList() {
         List<Room> roomList = roomService.getRoomList();
 
-        log.info("★");
-
         List<RoomVo> result = roomList.stream().map(mapRoom).collect(Collectors.toList());
 
         return new ResponseEntity<>(Response.builder().response(Result.builder().build()).contents(result).build(), HttpStatus.OK);
