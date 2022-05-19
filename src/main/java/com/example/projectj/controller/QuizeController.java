@@ -25,6 +25,8 @@ public class QuizeController {
 
         log.info("☆ 2번 커밋");
 
+        log.info("☆ 3번 커밋");
+
 
         log.info("☆" + (x - y));
         log.info("☆" + (x - y) / x);
